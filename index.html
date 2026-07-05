@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="hi" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Physics | Fighter's Classes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        .card-3d { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-3d:hover { transform: translateY(-10px) rotateX(5deg); }
+        .bg-atom { background: #dcfce7; color: #166534; }
+        .bg-bulb { background: #ffedd5; color: #9a3412; }
+        .bg-magnet { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 bg-white/80 backdrop-blur-md z-50 p-4 border-b border-gray-200 flex justify-between items-center px-8">
+        <h1 class="text-xl font-bold text-red-600 cursor-pointer" onclick="goHome()">FIGHTER PHYSICS</h1>
+        <button onclick="openAdminModal()" class="bg-gray-800 text-white px-4 py-2 rounded-full hover:scale-105 transition-all"> Admin</button>
+    </nav>
+
+    <!-- App Container -->
+    <main id="app" class="p-6 max-w-5xl mx-auto"></main>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-black/50 z-[100] p-4 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4">Admin Access</h2>
+            <input type="password" id="adminPass" placeholder="Enter Admin Password" class="w-full p-3 border rounded-xl mb-4">
+            <div class="flex gap-2">
+                <button onclick="checkAdmin()" class="bg-red-600 text-white w-full py-3 rounded-xl font-bold">Login</button>
+                <button onclick="closeModal()" class="bg-gray-200 w-full py-3 rounded-xl">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxT9iPzvi72gHL77_TetuJqId_b8hHJQQ",
+            databaseURL: "https://fastwork-16024-default-rtdb.firebaseio.com",
+            projectId: "fastwork-16024"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Immediate Loading of Cover (Matches "ChatGPT Image Jul 5, 2026, 03_23_53 PM.png" layout)
+        function goHome() {
+            document.getElementById('app').innerHTML = `
+                <div class="animate-in fade-in duration-1000">
+                    <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 text-center">
+                        <span class="bg-blue-900 text-white text-xs px-3 py-1 rounded font-bold uppercase tracking-widest">Fighter's Classes</span>
+                        <h2 class="text-6xl font-black mt-4 text-blue-950 uppercase">Easy Physics</h2>
+                        <p class="text-xl italic mt-2 text-gray-500">1st Edition of Digital Book</p>
+                        <div class="flex items-center justify-center gap-2 mt-4">
+                            <span class="w-20 h-1 bg-red-600"></span>
+                            <span class="text-sm font-bold uppercase">Govind Tanwar</span>
+                            <span class="w-20 h-1 bg-red-600"></span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                            <div class="card-3d bg-atom p-6 rounded-2xl border-2 border-green-500">
+                                <div class="text-4xl mb-4"></div>
+                                <h3 class="font-bold">Concept</h3>
+                            </div>
+                            <div class="card-3d bg-bulb p-6 rounded-2xl border-2 border-orange-500">
+                                <div class="text-4xl mb-4"></div>
+                                <h3 class="font-bold">Practice</h3>
+                            </div>
+                            <div class="card-3d bg-magnet p-6 rounded-2xl border-2 border-blue-500">
+                                <div class="text-4xl mb-4"></div>
+                                <h3 class="font-bold">Success</h3>
+                            </div>
+                        </div>
+
+                        <div class="mt-12 flex gap-4 justify-center">
+                            <button onclick="showClass('class11')" class="bg-blue-600 text-white px-10 py-4 rounded-full font-bold hover:bg-blue-700">Class 11</button>
+                            <button onclick="showClass('class12')" class="bg-red-600 text-white px-10 py-4 rounded-full font-bold hover:bg-red-700">Class 12</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('adminModal').classList.add('hidden'); }
+        
+        function checkAdmin() {
+            if(document.getElementById('adminPass').value === "Govphy7541") {
+                renderDashboard();
+            } else { alert("Wrong Password!"); }
+        }
+
+        function renderDashboard() {
+            document.getElementById('adminModal').innerHTML = `
+                <div class="bg-white p-8 rounded-2xl">
+                    <h2 class="text-xl font-bold mb-4">Admin Control</h2>
+                    <input type="text" id="chName" placeholder="Chapter Name" class="w-full p-2 border mb-2 rounded">
+                    <select id="cls" class="w-full p-2 border mb-2 rounded"><option value="class11">Class 11</option><option value="class12">Class 12</option></select>
+                    <textarea id="content" placeholder="Content" class="w-full p-2 border mb-4 h-32 rounded"></textarea>
+                    <button onclick="saveCh()" class="bg-green-600 text-white w-full py-2 rounded">Save</button>
+                </div>
+            `;
+        }
+
+        function saveCh() {
+            const cls = document.getElementById('cls').value;
+            const name = document.getElementById('chName').value;
+            const content = document.getElementById('content').value;
+            db.ref(cls).push({ name, content }).then(() => { alert("Saved!"); closeModal(); goHome(); });
+        }
+
+        function showClass(cls) {
+            db.ref(cls).once('value', snap => {
+                const chapters = snap.val() || {};
+                let html = `<div class="p-6"><button onclick="goHome()" class="mb-4 text-blue-600"> Back</button><div class="grid gap-4">`;
+                Object.entries(chapters).forEach(([id, ch]) => {
+                    html += `<div class="bg-white p-6 rounded-2xl shadow border border-gray-100">${ch.name}</div>`;
+                });
+                document.getElementById('app').innerHTML = html + `</div></div>`;
+            });
+        }
+
+        window.onload = goHome;
+    </script>
+</body>
+</html>
