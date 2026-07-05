@@ -3,45 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fighter Physics - Digital Book</title>
+    <title>Fighter Physics | Digital Book</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body { background-color: #f1f5f9; font-family: 'Segoe UI', sans-serif; }
-        .paper-card { background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); transition: transform 0.2s; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+        .paper-card { background: white; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: transform 0.2s; }
         .paper-card:hover { transform: translateY(-5px); }
-        .nav-btn { cursor: pointer; padding: 10px 20px; border-radius: 12px; font-weight: 600; }
-        .admin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+        .atom-green { color: #84cc16; }
+        .bulb-orange { color: #f97316; }
+        .magnet-blue { color: #0ea5e9; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="sticky top-0 bg-white/90 backdrop-blur-md shadow-sm z-40 p-4 flex justify-between items-center border-b border-gray-200">
-        <h1 class="text-xl font-bold text-orange-600 cursor-pointer" onclick="navigateTo('home')">फाइटर फिजिक्स</h1>
-        <button onclick="showLoginModal()" class="text-2xl">⚙️</button>
+    <header class="sticky top-0 bg-white/90 backdrop-blur shadow-sm z-40 p-4 flex justify-between items-center border-b border-gray-200">
+        <h1 class="text-xl font-bold cursor-pointer text-gray-800" onclick="navigateTo('home')">फाइटर फिजिक्स</h1>
+        <button onclick="checkAdminAccess()" class="text-2xl">⚙️</button>
     </header>
 
-    <main id="app" class="p-4 max-w-2xl mx-auto min-h-[80vh]">
-        <!-- Content will be injected here -->
-    </main>
+    <main id="app" class="p-4 max-w-2xl mx-auto min-h-[80vh]"></main>
 
     <!-- Admin Login Modal -->
-    <div id="loginModal" class="admin-modal">
+    <div id="loginModal" class="modal">
         <div class="paper-card p-8 w-[90%] max-w-sm">
             <h2 class="text-2xl font-bold mb-4">Admin Access</h2>
             <input type="password" id="adminPass" placeholder="Enter Password" class="w-full p-3 border rounded-xl mb-4 bg-gray-50">
             <div class="flex gap-2">
-                <button onclick="checkAdmin()" class="w-full bg-orange-600 text-white p-3 rounded-xl">Login</button>
-                <button onclick="hideLoginModal()" class="w-full bg-gray-200 p-3 rounded-xl">Close</button>
+                <button onclick="verifyAdmin()" class="w-full bg-orange-600 text-white p-3 rounded-xl">Login</button>
+                <button onclick="hideModal('loginModal')" class="w-full bg-gray-200 p-3 rounded-xl">Close</button>
             </div>
         </div>
     </div>
 
+    <!-- Admin Dashboard Modal -->
+    <div id="adminModal" class="modal">
+        <div class="paper-card p-6 w-[90%] max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div id="adminDashboardContent"></div>
+        </div>
+    </div>
+
     <script>
-        // 1. CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyDxT9iPzvi72gHL77_TetuJqId_b8hHJQQ",
             databaseURL: "https://fastwork-16024-default-rtdb.firebaseio.com",
@@ -51,47 +55,43 @@
         const db = firebase.database();
 
         let dbData = { class11: {}, class12: {} };
-        let isAdmin = false;
+        let activeAdminClass = 'class11';
 
-        // 2. DATA FETCHING
         db.ref().on('value', snap => {
             dbData = snap.val() || { class11: {}, class12: {} };
-            if(window.location.hash) navigateTo(window.location.hash.substring(1));
-            else navigateTo('home');
+            navigateTo(window.location.hash.substring(1) || 'home');
         });
 
-        // 3. ROUTER / NAVIGATION
         function navigateTo(page, params = {}) {
             const app = document.getElementById('app');
             window.location.hash = page;
 
             if (page === 'home') {
                 app.innerHTML = `
-                    <div class="text-center animate-in fade-in duration-500">
+                    <div class="text-center">
                         <div class="paper-card p-8 mb-8 border-t-4 border-orange-500">
                             <h2 class="text-4xl font-black text-gray-900">Easy Physics</h2>
                             <p class="text-orange-600 font-bold uppercase text-sm tracking-widest mt-2">1st Edition of Digital Book</p>
                             <p class="italic text-gray-500 mt-4">— Govind Tanwar</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <button onclick="navigateTo('class11')" class="paper-card p-6 h-32 flex flex-col items-center justify-center gap-2">
+                            <button onclick="navigateTo('class11')" class="paper-card p-6 flex flex-col items-center gap-2 atom-green">
                                 <span class="text-3xl">⚛️</span> <b>Class 11</b>
                             </button>
-                            <button onclick="navigateTo('class12')" class="paper-card p-6 h-32 flex flex-col items-center justify-center gap-2">
+                            <button onclick="navigateTo('class12')" class="paper-card p-6 flex flex-col items-center gap-2 bulb-orange">
                                 <span class="text-3xl">💡</span> <b>Class 12</b>
                             </button>
                         </div>
                     </div>
                 `;
-            } else if (page.startsWith('class')) {
-                const cls = page; // 'class11' or 'class12'
-                const chapters = dbData[cls] || {};
+            } else if (page === 'class11' || page === 'class12') {
+                const chapters = dbData[page] || {};
                 let html = `<button onclick="navigateTo('home')" class="mb-4 text-gray-500 font-semibold">← Back</button>
-                            <h2 class="text-2xl font-bold mb-6">${cls === 'class11' ? 'Class 11' : 'Class 12'}</h2>
+                            <h2 class="text-2xl font-bold mb-6">${page === 'class11' ? 'Class 11' : 'Class 12'}</h2>
                             <div class="space-y-3">`;
                 
                 Object.entries(chapters).forEach(([id, ch]) => {
-                    html += `<div class="paper-card p-5 cursor-pointer flex justify-between items-center" onclick="navigateTo('chapter', {cls: '${cls}', id: '${id}'})">
+                    html += `<div class="paper-card p-5 cursor-pointer flex justify-between items-center" onclick="navigateTo('chapter', {cls: '${page}', id: '${id}'})">
                                 <span class="font-bold">${ch.name}</span>
                                 <span class="text-orange-500">→</span>
                             </div>`;
@@ -109,41 +109,73 @@
             }
         }
 
-        // 4. ADMIN LOGIC
-        function showLoginModal() { document.getElementById('loginModal').style.display = 'flex'; }
-        function hideLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
-        
-        function checkAdmin() {
-            const pass = document.getElementById('adminPass').value;
-            if (pass === 'Govphy7541') {
-                isAdmin = true;
-                hideLoginModal();
-                alert("Welcome Admin!");
-                renderAdminPanel();
-            } else {
-                alert("Wrong Password!");
-            }
+        // Admin Auth
+        function checkAdminAccess() { document.getElementById('loginModal').style.display = 'flex'; }
+        function verifyAdmin() {
+            if (document.getElementById('adminPass').value === 'Govphy7541') {
+                hideModal('loginModal');
+                openAdminDashboard();
+            } else { alert("Wrong Password!"); }
         }
 
-        function renderAdminPanel() {
-            document.getElementById('app').innerHTML = `
-                <div class="paper-card p-6">
-                    <h2 class="text-xl font-bold mb-4">Admin Dashboard</h2>
-                    <input type="text" id="addName" placeholder="Chapter Name" class="w-full p-3 mb-2 border rounded-lg">
-                    <textarea id="addContent" placeholder="HTML Content" class="w-full p-3 mb-4 border rounded-lg h-32"></textarea>
-                    <button onclick="saveChapter()" class="w-full bg-blue-600 text-white p-3 rounded-lg">Add to Class 11</button>
+        function openAdminDashboard() {
+            document.getElementById('adminModal').style.display = 'flex';
+            renderAdminDashboard();
+        }
+
+        function renderAdminDashboard() {
+            const content = document.getElementById('adminDashboardContent');
+            const chapters = dbData[activeAdminClass] || {};
+            
+            content.innerHTML = `
+                <div class="flex justify-between mb-4">
+                    <h2 class="text-xl font-bold">Admin Panel</h2>
+                    <button onclick="hideModal('adminModal')">✕</button>
                 </div>
+                <div class="flex gap-2 mb-4">
+                    <button onclick="setActiveClass('class11')" class="px-4 py-2 ${activeAdminClass==='class11' ? 'bg-orange-600 text-white' : 'bg-gray-200'} rounded-lg">Class 11</button>
+                    <button onclick="setActiveClass('class12')" class="px-4 py-2 ${activeAdminClass==='class12' ? 'bg-orange-600 text-white' : 'bg-gray-200'} rounded-lg">Class 12</button>
+                </div>
+                <button onclick="showAddForm()" class="w-full bg-blue-600 text-white p-3 rounded-lg mb-4">+ Add Chapter to ${activeAdminClass}</button>
+                <div class="space-y-2">
+                    ${Object.entries(chapters).map(([id, ch]) => `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span>${ch.name}</span>
+                            <button onclick="deleteChapter('${id}')" class="text-red-500">Delete</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function setActiveClass(cls) { activeAdminClass = cls; renderAdminDashboard(); }
+
+        function showAddForm() {
+            document.getElementById('adminDashboardContent').innerHTML = `
+                <h2 class="font-bold mb-4">Add Chapter to ${activeAdminClass}</h2>
+                <input type="text" id="addName" placeholder="Chapter Name" class="w-full p-3 mb-2 border rounded-lg">
+                <textarea id="addContent" placeholder="HTML Content" class="w-full p-3 mb-4 border rounded-lg h-32"></textarea>
+                <button onclick="saveChapter()" class="w-full bg-green-600 text-white p-3 rounded-lg">Save Chapter</button>
+                <button onclick="renderAdminDashboard()" class="w-full bg-gray-300 p-3 rounded-lg mt-2">Back</button>
             `;
         }
 
         function saveChapter() {
             const name = document.getElementById('addName').value;
             const content = document.getElementById('addContent').value;
-            db.ref('class11').push({ name, content }).then(() => {
+            db.ref(activeAdminClass).push({ name, content }).then(() => {
                 alert("Chapter Added!");
-                navigateTo('class11');
+                renderAdminDashboard();
             });
         }
+
+        function deleteChapter(id) {
+            if(confirm("Delete this chapter?")) {
+                db.ref(activeAdminClass + '/' + id).remove().then(renderAdminDashboard);
+            }
+        }
+
+        function hideModal(id) { document.getElementById(id).style.display = 'none'; }
     </script>
 </body>
 </html>
